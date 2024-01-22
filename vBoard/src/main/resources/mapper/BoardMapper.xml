@@ -3,9 +3,68 @@
 
 
 <mapper namespace="com.oracle.vBoard.mapper.BoardMapper">
-	<select id="getList" resultType="com.oracle.vBoard.dto.Board">
-		SELECT * FROM vue_board
+
+<sql id="search">
+ <if test="keyword  != null and keyword  != ''">
+        <choose>
+            <when test='searchType == "T".toString()'>
+                AND title LIKE CONCAT('%', #{keyword}, '%')
+            </when>
+            <when test='searchType == "C".toString()'>
+                AND content LIKE CONCAT('%', #{keyword}, '%')
+            </when>
+            <when test='searchType == "A".toString()'>
+                AND (
+                    content LIKE CONCAT('%', #{keyword}, '%') OR
+                    title LIKE CONCAT('%', #{keyword}, '%') OR
+                    writer LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </when>
+        </choose>
+    </if>
+
+</sql>
+	<!--목록조회  -->
+	<select id="getBoardList" resultType="map">
+		  SELECT * FROM vue_board
+		  WHERE 
+			1=1
+  		 <include refid="search"></include>
+  		 ORDER BY updatedate desc
+	     LIMIT #{startIndex},#{pageSize}
 	</select>
-
-
+	<!--목록 총개수 -->
+	<select id="totallist" resultType="int" parameterType="com.oracle.vBoard.dto.Board">
+		SELECT COUNT(*) FROM vue_board
+		WHERE 
+		1=1
+	<include refid="search"></include>
+	</select>
+	<!--상세조회  -->
+	<select id="getboardDetail" resultType="com.oracle.vBoard.dto.Board">
+		SELECT * FROM VUE_BOARD WHERE id = #{id}
+	</select>
+	<!-- 글 등록 -->
+	<insert id="insertBoard">
+	    INSERT INTO VUE_BOARD
+	    	(title, content, writer, regdate, updatedate) 
+	    values
+	    	(#{title}, #{content}, #{writer}, now(), now())
+    </insert>
+    <!-- 글 수정 -->  
+    <update id="updateBoard">
+	    UPDATE VUE_BOARD
+	    SET
+	    	title = #{title}
+	    	, writer = #{writer}
+	    	, content = #{content}
+	    	, updatedate = now()
+	    WHERE id = #{id}
+    </update>
+	<!-- 글 삭제 -->    
+    <delete id="deleteBoard">
+    	DELETE FROM VUE_BOARD WHERE id = #{id}
+    </delete>
+    
+    
 </mapper>
